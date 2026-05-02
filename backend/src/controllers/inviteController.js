@@ -47,7 +47,9 @@ export const createInvite = asyncHandler(async (req, res) => {
 
   const response = inviteResponse(invite, token);
   response.emailSent = mail.sent;
-  response.emailMessage = mail.sent ? 'Invite email sent.' : 'SMTP is not configured. Use this invite link manually.';
+  response.emailMessage = mail.sent
+    ? 'Invite email sent.'
+    : `${mail.reason || 'Email could not be sent'}. Use this invite link manually.`;
 
   res.status(201).json(response);
 });
