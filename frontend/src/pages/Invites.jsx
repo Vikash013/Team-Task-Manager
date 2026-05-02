@@ -1,6 +1,11 @@
-import { MailPlus, XCircle } from 'lucide-react';
+import { MailPlus, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { cancelInviteRequest, createInviteRequest, getInvitesRequest } from '../services/inviteService.js';
+import {
+  cancelInviteRequest,
+  createInviteRequest,
+  deleteInviteRequest,
+  getInvitesRequest
+} from '../services/inviteService.js';
 import { getErrorMessage } from '../utils/errors.js';
 
 const Invites = () => {
@@ -44,6 +49,17 @@ const Invites = () => {
     setError('');
     try {
       await cancelInviteRequest(inviteId);
+      loadInvites();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  const removeInvite = async (inviteId) => {
+    if (!window.confirm('Remove this invite from history?')) return;
+    setError('');
+    try {
+      await deleteInviteRequest(inviteId);
       loadInvites();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -123,19 +139,27 @@ const Invites = () => {
                 <td className="px-4 py-3 text-sm capitalize">{invite.role}</td>
                 <td className="px-4 py-3 text-sm font-semibold">{getInviteStatus(invite)}</td>
                 <td className="px-4 py-3 text-sm">{new Date(invite.expiresAt).toLocaleDateString()}</td>
-                <td className="px-4 py-3 text-right">
-                  {!invite.acceptedAt && !invite.cancelledAt && new Date(invite.expiresAt) > new Date() ? (
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-2">
+                    {!invite.acceptedAt && !invite.cancelledAt && new Date(invite.expiresAt) > new Date() ? (
+                      <button
+                        type="button"
+                        onClick={() => cancelInvite(invite.id)}
+                        className="focus-ring inline-flex items-center gap-2 rounded-md bg-coral px-3 py-1.5 text-sm font-bold text-white"
+                      >
+                        <XCircle size={15} />
+                        Cancel
+                      </button>
+                    ) : null}
                     <button
                       type="button"
-                      onClick={() => cancelInvite(invite.id)}
-                      className="focus-ring inline-flex items-center gap-2 rounded-md bg-coral px-3 py-1.5 text-sm font-bold text-white"
+                      onClick={() => removeInvite(invite.id)}
+                      className="focus-ring inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 text-sm font-bold text-ink"
                     >
-                      <XCircle size={15} />
-                      Cancel
+                      <Trash2 size={15} />
+                      Remove
                     </button>
-                  ) : (
-                    <span className="text-xs font-semibold text-slate-500">No action</span>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}

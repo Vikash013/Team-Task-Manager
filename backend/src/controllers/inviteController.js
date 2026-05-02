@@ -100,3 +100,15 @@ export const cancelInvite = asyncHandler(async (req, res) => {
 
   res.json(inviteResponse(invite));
 });
+
+export const deleteInvite = asyncHandler(async (req, res) => {
+  const invite = await Invite.findById(req.params.id);
+
+  if (!invite) {
+    res.status(404);
+    throw new Error('Invite not found');
+  }
+
+  await invite.deleteOne();
+  res.json({ message: 'Invite removed' });
+});
