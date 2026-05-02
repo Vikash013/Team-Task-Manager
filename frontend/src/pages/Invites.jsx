@@ -2,11 +2,14 @@ import { Check, Copy, Link2, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   cancelInviteRequest,
+  clearInviteHistoryRequest,
   createInviteRequest,
   deleteInviteRequest,
   getInvitesRequest
 } from '../services/inviteService.js';
 import { getErrorMessage } from '../utils/errors.js';
+
+const isInviteActive = (invite) => !invite.acceptedAt && !invite.cancelledAt && new Date(invite.expiresAt) > new Date();
 
 const Invites = () => {
   const [invites, setInvites] = useState([]);
@@ -15,6 +18,7 @@ const Invites = () => {
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const inactiveInviteCount = invites.filter((invite) => !isInviteActive(invite)).length;
 
   const loadInvites = async () => {
     try {
@@ -79,11 +83,23 @@ const Invites = () => {
     }
   };
 
+  const clearInviteHistory = async () => {
+    if (!inactiveInviteCount) return;
+    if (!window.confirm(`Clear ${inactiveInviteCount} inactive invite records? Active pending links will stay available.`)) return;
+    setError('');
+    try {
+      const { data } = await clearInviteHistoryRequest();
+      setNotice(`${data.deletedCount || 0} invite records removed.`);
+      loadInvites();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
   const getInviteStatus = (invite) => {
     if (invite.acceptedAt) return 'Accepted';
     if (invite.cancelledAt) return 'Cancelled';
-    if (new Date(invite.expiresAt) < new Date()) return 'Expired';
-    return 'Pending';
+    return isInviteActive(invite) ? 'Pending' : 'Expired';
   };
 
   return (
@@ -147,6 +163,21 @@ const Invites = () => {
       </form>
 
       <section className="overflow-hidden rounded-md border border-line bg-white shadow-soft">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+          <div>
+            <h2 className="text-sm font-black uppercase text-slate-600">Invite history</h2>
+            <p className="text-sm font-semibold text-slate-500">{inactiveInviteCount} inactive records</p>
+          </div>
+          <button
+            type="button"
+            onClick={clearInviteHistory}
+            disabled={!inactiveInviteCount}
+            className="focus-ring inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 size={15} />
+            Clear History
+          </button>
+        </div>
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-mist">
             <tr>
@@ -166,7 +197,7 @@ const Invites = () => {
                 <td className="px-4 py-3 text-sm">{new Date(invite.expiresAt).toLocaleDateString()}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
-                    {!invite.acceptedAt && !invite.cancelledAt && new Date(invite.expiresAt) > new Date() ? (
+                    {isInviteActive(invite) ? (
                       <button
                         type="button"
                         onClick={() => cancelInvite(invite.id)}

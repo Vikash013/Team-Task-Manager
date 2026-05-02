@@ -28,7 +28,7 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
   res.json({
     message: mail.sent
       ? 'Password reset email sent.'
-      : 'SMTP is not configured. Use this reset link manually.',
+      : `${mail.reason || 'Email could not be sent'}. Use this reset link manually.`,
     resetUrl: mail.sent ? undefined : resetUrl,
     emailSent: mail.sent,
     expiresAt: reset.expiresAt

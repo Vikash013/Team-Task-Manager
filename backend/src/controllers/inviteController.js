@@ -118,3 +118,18 @@ export const deleteInvite = asyncHandler(async (req, res) => {
   await invite.deleteOne();
   res.json({ message: 'Invite removed' });
 });
+
+export const clearInactiveInvites = asyncHandler(async (_req, res) => {
+  const result = await Invite.deleteMany({
+    $or: [
+      { acceptedAt: { $ne: null } },
+      { cancelledAt: { $ne: null } },
+      { expiresAt: { $lte: new Date() } }
+    ]
+  });
+
+  res.json({
+    message: 'Invite history cleared',
+    deletedCount: result.deletedCount || 0
+  });
+});

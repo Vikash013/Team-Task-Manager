@@ -10,8 +10,9 @@ Team Task Manager is a production-ready full-stack web app for managing projects
 - Project and team management
 - Task priority, tags, status, due dates, and overdue detection
 - Task comments and activity history
-- Admin email invites with expiring links
-- Password reset by email
+- Manual invite links with copy/share flow, expiring tokens, and history cleanup
+- Optional email delivery through Resend or SMTP
+- Password reset by email when an email provider is configured
 - Overdue task notifications
 - Main-admin-only user removal with a separate removal password
 - Railway-compatible deployment setup
@@ -25,7 +26,7 @@ Team Task Manager is a production-ready full-stack web app for managing projects
 | Backend | Node.js, Express |
 | Database | MongoDB, Mongoose |
 | Authentication | JWT, bcrypt |
-| Email | Nodemailer SMTP |
+| Email | Manual invite links by default, optional Resend or Nodemailer SMTP |
 | Deployment | Railway |
 
 ## Role Model
@@ -40,7 +41,8 @@ Admins can:
 - Create, assign, update, and delete tasks
 - Set task priority, tags, due dates, and assignment
 - Comment on any task
-- Invite users by email
+- Create manual invite links for users
+- Cancel active invites and clear inactive invite history
 - View overdue notifications and workspace analytics
 
 ### Main Admin
@@ -79,7 +81,7 @@ Members cannot create projects, assign tasks, invite users, or manage team membe
 - Member dashboard
 - Projects
 - Tasks
-- Invites
+- Invite Links
 - Team management
 - Overdue notifications
 
@@ -169,6 +171,9 @@ MAIN_ADMIN_EMAIL=vlistenmusic@gmail.com
 USER_REMOVAL_PASSWORD=change-this-removal-password
 
 EMAIL_FROM="Team Task Manager <your-email@example.com>"
+INVITE_EMAIL_ENABLED=false
+RESEND_API_KEY=
+RESEND_FROM=
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -213,17 +218,36 @@ Backend health check:
 http://localhost:5000/api/health
 ```
 
-## Email Setup
+## Invite Links And Email
 
-Invites and password reset links are sent through SMTP using Nodemailer.
+Invites are manual links by default. Admins create an invite, copy the generated link, and share it through WhatsApp, Gmail, or any other channel. This avoids requiring a verified email domain.
 
-For Gmail:
+The invite history table supports:
 
-1. Enable 2-Step Verification in your Google account.
-2. Create a Google App Password.
-3. Put the app password in `SMTP_PASS`.
+- Removing one invite record
+- Clearing inactive history in bulk
+- Keeping active pending invite links available during bulk cleanup
 
-Example:
+Email delivery is optional. To send invite emails automatically, set:
+
+```env
+INVITE_EMAIL_ENABLED=true
+```
+
+On Railway Free/Trial/Hobby, prefer Resend because SMTP ports can time out:
+
+```env
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM=Team Task Manager <onboarding@resend.dev>
+```
+
+`onboarding@resend.dev` is for testing and usually only sends to your own Resend account email. To send to other recipients, verify a domain in Resend and use an address on that domain:
+
+```env
+RESEND_FROM=Team Task Manager <noreply@yourdomain.com>
+```
+
+SMTP is still supported for local development or hosts where SMTP is available:
 
 ```env
 EMAIL_FROM="Team Task Manager <your-email@gmail.com>"
@@ -235,8 +259,6 @@ SMTP_PASS=your-google-app-password
 ```
 
 Do not use your normal Gmail password.
-
-If SMTP is not configured, the app still works in development by showing invite/reset links on screen.
 
 ## Railway Deployment
 
@@ -258,24 +280,34 @@ npm start
 
 ```env
 NODE_ENV=production
-MONGO_URI=your-production-mongodb-uri
+MONGO_URI=${{MongoDB.MONGO_URL}}
 JWT_SECRET=your-production-jwt-secret
 JWT_EXPIRES_IN=7d
-CLIENT_URL=https://your-railway-domain
+CLIENT_URL=https://your-railway-domain.up.railway.app
 ADMIN_SETUP_KEY=your-admin-setup-key
 MAIN_ADMIN_EMAIL=vlistenmusic@gmail.com
 USER_REMOVAL_PASSWORD=your-secure-removal-password
+```
+
+Do not set `PORT=5000` on Railway. Railway provides the runtime port. When generating a public domain, use target port `8080`.
+
+Optional email variables:
+
+```env
+INVITE_EMAIL_ENABLED=false
+RESEND_API_KEY=
+RESEND_FROM=
 EMAIL_FROM="Team Task Manager <your-email@example.com>"
-SMTP_HOST=your-smtp-host
+SMTP_HOST=
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=your-smtp-user
-SMTP_PASS=your-smtp-password
+SMTP_USER=
+SMTP_PASS=
 ```
 
 The included `railway.json` configures:
 
-- Nixpacks build
+- Railpack build
 - `npm run build`
 - `npm start`
 - health check at `/api/health`
@@ -299,6 +331,8 @@ The included `railway.json` configures:
 | GET | `/api/invites` | Admin |
 | POST | `/api/invites` | Admin |
 | PATCH | `/api/invites/:id/cancel` | Admin |
+| DELETE | `/api/invites/:id` | Admin |
+| DELETE | `/api/invites/history/inactive` | Admin |
 | GET | `/api/invites/verify/:token` | Public |
 
 ### Users
@@ -375,7 +409,7 @@ npm run dev --prefix frontend
 
 - Use MongoDB Atlas or a managed MongoDB instance.
 - Set a long random `JWT_SECRET`.
-- Configure SMTP for invite and password reset email.
+- Use manual invite links by default, or configure Resend/SMTP if automatic email is needed.
 - Set `CLIENT_URL` to your deployed frontend/backend domain.
 - Change `ADMIN_SETUP_KEY`.
 - Change `USER_REMOVAL_PASSWORD`.
