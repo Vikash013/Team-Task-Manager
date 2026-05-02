@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
 
+const hasResendConfig = () => Boolean(process.env.RESEND_API_KEY);
 const hasSmtpConfig = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+const getEmailFrom = () => process.env.RESEND_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER;
 
 const createTransporter = () =>
   nodemailer.createTransport({
@@ -17,18 +19,52 @@ const createTransporter = () =>
     }
   });
 
-export const sendEmail = async ({ to, subject, text, html }) => {
-  if (!hasSmtpConfig()) {
+const sendWithResend = async ({ to, subject, text, html }) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: getEmailFrom(),
+        to: [to],
+        subject,
+        text,
+        html
+      }),
+      signal: controller.signal
+    });
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        sent: false,
+        reason: body.message || body.error?.message || 'Resend email delivery failed'
+      };
+    }
+
+    return { sent: true };
+  } catch (error) {
+    console.error(`Resend delivery failed: ${error.message}`);
     return {
       sent: false,
-      reason: 'SMTP is not configured'
+      reason: error.name === 'AbortError' ? 'Resend connection timeout' : error.message
     };
+  } finally {
+    clearTimeout(timeout);
   }
+};
 
+const sendWithSmtp = async ({ to, subject, text, html }) => {
   const transporter = createTransporter();
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      from: getEmailFrom(),
       to,
       subject,
       text,
@@ -43,6 +79,21 @@ export const sendEmail = async ({ to, subject, text, html }) => {
   }
 
   return { sent: true };
+};
+
+export const sendEmail = async ({ to, subject, text, html }) => {
+  if (hasResendConfig()) {
+    return sendWithResend({ to, subject, text, html });
+  }
+
+  if (hasSmtpConfig()) {
+    return sendWithSmtp({ to, subject, text, html });
+  }
+
+  return {
+    sent: false,
+    reason: 'Email provider is not configured'
+  };
 };
 
 export const sendInviteEmail = ({ to, inviteUrl, role, invitedBy }) =>
