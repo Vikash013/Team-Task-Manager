@@ -1,4 +1,4 @@
-import { Bell, FolderKanban, LayoutDashboard, ListTodo, LogOut, MailPlus, Users } from 'lucide-react';
+import { Bell, FolderKanban, LayoutDashboard, Link2, ListTodo, LogOut, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -18,7 +18,7 @@ const AppLayout = () => {
     ? [
         ...navItems,
         { to: '/team', label: 'Team', icon: Users },
-        { to: '/invites', label: 'Invites', icon: MailPlus }
+        { to: '/invites', label: 'Invite Links', icon: Link2 }
       ]
     : navItems;
 

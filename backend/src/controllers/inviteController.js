@@ -5,6 +5,8 @@ import { buildInviteUrl } from '../utils/appUrls.js';
 import { createPlainToken, hashToken } from '../utils/crypto.js';
 import { sendInviteEmail } from '../utils/email.js';
 
+const shouldSendInviteEmail = () => process.env.INVITE_EMAIL_ENABLED === 'true';
+
 const inviteResponse = (invite, token = null) => ({
   id: invite._id,
   email: invite.email,
@@ -38,18 +40,22 @@ export const createInvite = asyncHandler(async (req, res) => {
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   });
 
-  const mail = await sendInviteEmail({
-    to: email,
-    inviteUrl,
-    role,
-    invitedBy: req.user.name
-  });
+  const mail = shouldSendInviteEmail()
+    ? await sendInviteEmail({
+        to: email,
+        inviteUrl,
+        role,
+        invitedBy: req.user.name
+      })
+    : { sent: false, reason: 'Manual invite link created' };
 
   const response = inviteResponse(invite, token);
   response.emailSent = mail.sent;
-  response.emailMessage = mail.sent
-    ? 'Invite email sent.'
-    : `${mail.reason || 'Email could not be sent'}. Use this invite link manually.`;
+  response.emailMessage = shouldSendInviteEmail()
+    ? mail.sent
+      ? 'Invite email sent.'
+      : `${mail.reason || 'Email could not be sent'}. Use this invite link manually.`
+    : 'Manual invite link created.';
 
   res.status(201).json(response);
 });

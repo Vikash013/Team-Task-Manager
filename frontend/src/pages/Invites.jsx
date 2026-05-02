@@ -1,4 +1,4 @@
-import { MailPlus, Trash2, XCircle } from 'lucide-react';
+import { Check, Copy, Link2, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   cancelInviteRequest,
@@ -12,6 +12,7 @@ const Invites = () => {
   const [invites, setInvites] = useState([]);
   const [form, setForm] = useState({ email: '', role: 'member' });
   const [latestLink, setLatestLink] = useState('');
+  const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
@@ -33,6 +34,7 @@ const Invites = () => {
     setError('');
     setNotice('');
     setLatestLink('');
+    setCopied(false);
     try {
       const { data } = await createInviteRequest(form);
       setNotice(data.emailMessage || 'Invite created.');
@@ -41,6 +43,17 @@ const Invites = () => {
       loadInvites();
     } catch (err) {
       setError(getErrorMessage(err));
+    }
+  };
+
+  const copyLatestLink = async () => {
+    setError('');
+    try {
+      await navigator.clipboard.writeText(latestLink);
+      setCopied(true);
+      setNotice('Invite link copied.');
+    } catch (_err) {
+      setError('Copy failed. Select and copy the invite link manually.');
     }
   };
 
@@ -76,8 +89,8 @@ const Invites = () => {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm font-bold uppercase text-pine">Team invitations</p>
-        <h1 className="mt-1 text-3xl font-black text-ink">Invite users by email</h1>
+        <p className="text-sm font-bold uppercase text-pine">Manual invitations</p>
+        <h1 className="mt-1 text-3xl font-black text-ink">Create invite links</h1>
       </section>
 
       {error ? <div className="rounded-md bg-red-50 p-4 font-semibold text-coral">{error}</div> : null}
@@ -86,7 +99,7 @@ const Invites = () => {
       <form onSubmit={submitInvite} className="rounded-md border border-line bg-white p-5 shadow-soft">
         <div className="grid gap-4 md:grid-cols-[1fr_180px_auto]">
           <label>
-            <span className="text-sm font-bold">Email</span>
+            <span className="text-sm font-bold">Recipient email</span>
             <input
               type="email"
               value={form.email}
@@ -107,16 +120,28 @@ const Invites = () => {
             </select>
           </label>
           <button className="focus-ring mt-6 inline-flex items-center justify-center gap-2 rounded-md bg-pine px-4 py-2 font-bold text-white">
-            <MailPlus size={18} />
-            Create Invite
+            <Link2 size={18} />
+            Create Link
           </button>
         </div>
         {latestLink ? (
           <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3">
-            <p className="text-sm font-black text-pine">Invite link</p>
-            <a href={latestLink} className="break-all text-sm font-semibold text-ink">
-              {latestLink}
-            </a>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-pine">Invite link</p>
+                <a href={latestLink} className="break-all text-sm font-semibold text-ink">
+                  {latestLink}
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={copyLatestLink}
+                className="focus-ring inline-flex items-center gap-2 rounded-md bg-pine px-3 py-1.5 text-sm font-bold text-white"
+              >
+                {copied ? <Check size={15} /> : <Copy size={15} />}
+                {copied ? 'Copied' : 'Copy Link'}
+              </button>
+            </div>
           </div>
         ) : null}
       </form>
@@ -125,7 +150,7 @@ const Invites = () => {
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-mist">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase text-slate-600">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase text-slate-600">Recipient</th>
               <th className="px-4 py-3 text-left text-xs font-black uppercase text-slate-600">Role</th>
               <th className="px-4 py-3 text-left text-xs font-black uppercase text-slate-600">Status</th>
               <th className="px-4 py-3 text-left text-xs font-black uppercase text-slate-600">Expires</th>
