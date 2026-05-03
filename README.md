@@ -416,3 +416,11 @@ npm run dev --prefix frontend
 - Change `USER_REMOVAL_PASSWORD`.
 - Confirm `MAIN_ADMIN_EMAIL` is correct.
 - Do not expose `.env` files.
+
+---
+
+## Made By
+
+👨‍💻 **Vikash Yadav**
+
+A focused, production-ready workspace designed and built with care for teams that value clarity, collaboration, and control.
