@@ -10,7 +10,7 @@ const TaskCard = ({ task, onStatusChange }) => {
   const overdue = task.status !== 'Done' && isBefore(new Date(task.dueDate), new Date());
 
   return (
-    <article className="relative overflow-hidden rounded-md border border-line bg-white p-4 shadow-soft">
+    <article className="relative overflow-hidden rounded-md border border-line bg-white/95 p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-pine via-gold to-coral" />
       <div className="flex items-start justify-between gap-3">
         <div>

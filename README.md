@@ -5,6 +5,7 @@ Team Task Manager is a production-ready full-stack web app for managing projects
 ## Highlights
 
 - Role-based dashboards for Admin and Member users
+- Polished responsive UI with redesigned auth screens and a stronger workspace shell
 - JWT authentication with bcrypt password hashing
 - MongoDB schemas with Mongoose references
 - Project and team management

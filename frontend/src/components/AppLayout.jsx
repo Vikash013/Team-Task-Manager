@@ -34,13 +34,23 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#f4f7f5_0%,#eef5f0_45%,#f8f1ef_100%)]">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-ink px-5 py-6 text-white lg:block">
+    <div className="min-h-screen bg-[linear-gradient(135deg,#edf7f1_0%,#f8f1ef_52%,#fbf8ee_100%)]">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-[linear-gradient(180deg,#17211c_0%,#1f4f40_58%,#17211c_100%)] px-5 py-6 text-white lg:block">
         <div>
-          <p className="text-xl font-black tracking-tight">Team Task Manager</p>
-          <span className="mt-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase text-emerald-100">
-            {isAdmin ? 'Admin Control' : 'Member Workspace'}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-md bg-white text-ink">
+              <ListTodo size={22} />
+            </span>
+            <div>
+              <p className="text-xl font-black tracking-tight">Team Task Manager</p>
+              <p className="text-xs font-bold uppercase text-white/60">{isAdmin ? 'Admin Control' : 'Member Workspace'}</p>
+            </div>
+          </div>
+          <div className="mt-6 rounded-md border border-white/10 bg-white/10 p-3">
+            <p className="text-xs font-bold uppercase text-white/60">Signed in as</p>
+            <p className="mt-1 text-sm font-black">{user.name}</p>
+            <p className="break-all text-xs text-white/60">{user.email}</p>
+          </div>
         </div>
         <nav className="mt-8 space-y-2">
           {visibleNavItems.map(({ to, label, icon: Icon }) => (
@@ -48,8 +58,8 @@ const AppLayout = () => {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition ${
-                  isActive ? 'bg-white text-ink' : 'text-white/80 hover:bg-white/10 hover:text-white'
+                `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold transition ${
+                  isActive ? 'bg-white text-ink shadow-sm' : 'text-white/75 hover:bg-white/10 hover:text-white'
                 }`
               }
             >
@@ -76,14 +86,10 @@ const AppLayout = () => {
               {!notifications.count ? <p className="text-xs text-white/60">No overdue tasks.</p> : null}
             </div>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/10 p-3">
-            <p className="text-sm font-bold">{user.name}</p>
-            <p className="break-all text-xs text-white/65">{user.email}</p>
-          </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="focus-ring mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-coral px-3 py-2.5 text-sm font-bold text-white"
+            className="focus-ring mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-coral px-3 py-2.5 text-sm font-black text-white transition hover:bg-red-600"
           >
             <LogOut size={16} />
             Logout
@@ -92,7 +98,7 @@ const AppLayout = () => {
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-10 border-b border-line bg-white/95 px-4 py-4 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-10 border-b border-line bg-white/95 px-4 py-4 shadow-sm backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-lg font-black">Team Task Manager</p>
@@ -119,7 +125,7 @@ const AppLayout = () => {
             ))}
           </nav>
         </header>
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
           <Outlet />
         </main>
       </div>
