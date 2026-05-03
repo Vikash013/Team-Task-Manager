@@ -31,7 +31,7 @@ export const createInvite = asyncHandler(async (req, res) => {
   }
 
   const token = createPlainToken();
-  const inviteUrl = buildInviteUrl(token);
+  const inviteUrl = buildInviteUrl(token, req.get('origin'));
   const invite = await Invite.create({
     email,
     role,

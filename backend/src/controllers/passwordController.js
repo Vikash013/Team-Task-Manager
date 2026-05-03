@@ -13,7 +13,7 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
   }
 
   const token = createPlainToken();
-  const resetUrl = buildResetUrl(token);
+  const resetUrl = buildResetUrl(token, req.get('origin'));
   const reset = await PasswordReset.create({
     user: user._id,
     tokenHash: hashToken(token),
